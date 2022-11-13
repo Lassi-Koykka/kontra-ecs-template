@@ -1,0 +1,55 @@
+import { ECS, System } from "./ecs";
+import { Timer } from "./timer";
+
+// Global types
+declare global {
+  var GAMESTATE: GameState;
+  var KEYMAP: Keymap;
+  var KEYMAP_PREV: Keymap;
+  var AUDIO_MANAGER: IAudioManager;
+  var SYSTEMS: { [name: string]: System };
+  var IMAGES: { [label: string]: HTMLImageElement };
+  var timer: Timer;
+  var ecs: ECS;
+  var canvas: HTMLCanvasElement;
+  var ctx: CanvasRenderingContext2D;
+  var restart: () => void;
+}
+
+export interface GameState {
+  scene: "titleScreen" | "game" | "gameOver";
+  paused: boolean;
+}
+
+export type Keymap = { [key: string]: boolean | undefined };
+
+// Component types
+export type soundClipType = "walk" | "attack" | "death" | "hitHurt";
+
+export interface AudioClip {
+  clip: soundClipType;
+  playing: boolean;
+}
+
+export interface IAudioClipBuffers {
+  [key: string]: AudioBuffer;
+}
+export interface IAudioManager {
+  audioCtx: AudioContext;
+  buffers: IAudioClipBuffers;
+  playClip: (
+    clip: string,
+    options?: {
+      volume?: number;
+      when?: number;
+      offset?: number;
+      duration?: number;
+      loop?: boolean;
+      onEnded?: () => void
+    }
+  ) => void;
+}
+
+export interface ControlsData {
+
+}
