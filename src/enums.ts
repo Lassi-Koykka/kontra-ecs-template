@@ -16,7 +16,7 @@ export enum EntityStatus {
   ENEMY,
 }
 
-export enum ColliderType {
+export enum ColliderShape {
   RECTANGLE,
   CIRCLE,
 }

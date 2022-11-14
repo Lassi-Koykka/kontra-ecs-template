@@ -265,14 +265,14 @@ obstacle( canvas.width * 0.75, canvas.height / 2 )
 
 // --- LOOP ---
 let loop = GameLoop({
-  update: (delta) => {
+  update: function(delta) {
     world.delta = delta;
     pipeline(world)
 
     // Set keymap history
     KEYMAP_PREV = Object.assign(KEYMAP_PREV, KEYMAP);
   },
-  render: () => { // render the game state
+  render: function() { // render the game state
     renderPipeline(world)
   }
 });
