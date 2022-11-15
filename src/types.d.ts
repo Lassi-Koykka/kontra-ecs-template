@@ -16,6 +16,11 @@ declare global {
   var restart: () => void;
 }
 
+interface W extends IWorld {
+  delta: number,
+  gameObjects: {[eid: number]: GameObject}
+}
+
 export interface GameState {
   scene: "titleScreen" | "game" | "gameOver";
   paused: boolean;
