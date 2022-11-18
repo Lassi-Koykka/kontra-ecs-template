@@ -1,10 +1,10 @@
-import { defineQuery } from "bitecs"
+import { defineQuery, hasComponent } from "bitecs"
 import { Vector } from "kontra"
-import { BoxCollider, Controls, InputListener, Position, Size, Speed } from "./components"
+import { BoxCollider, Controls, Gravity, Grounded, InputListener, JumpHeight, Position, Size, Speed, Static, Velocity } from "./components"
 import { keyDown, keyPress } from "./input"
-import { W } from "./types"
+import { CollisionSide, W } from "./types"
 
-export const movementQuery = defineQuery([Position, Speed, Controls])
+export const movementQuery = defineQuery([Position, Speed, Velocity, Controls])
 export const inputListenerQuery = defineQuery([InputListener, Controls])
 export const colliderQuery = defineQuery([BoxCollider, Position])
 
@@ -20,17 +20,16 @@ type Bounds = {
   ob: number
 }
 
-type CollisionSide = null |  "left" | "right" | "top" | "bottom"
 
 const rectCollide = (a: Bounds, b:Bounds): CollisionSide  => {
-  if(a.t > b.b || a.b < b.t || a.r < b.l || a.l > b.r) return null;
+  if(a.t > b.b || a.b < b.t || a.r < b.l || a.l > b.r) return false;
 
   if (a.t <= b.b && a.ot > b.ob) return "top"
   else if (a.r >= b.l && a.or < b.ol) return "right";
   else if (a.l <= b.r && a.ol > b.or) return "left"
   else if (a.b >= b.t && a.ob < b.ob) return "bottom";
 
-  return null
+  return true
 }
 
 export const getColliderBounds = (eid: number): Bounds => {
@@ -65,21 +64,16 @@ const updateGameObject = (world: W, eid: number) => {
         go.height = Size.h[eid]
 }
 
-// --- SYSTEMS ---
-export const movementSystem = (world: W) => {
-  const {delta} = world
-  const entities = movementQuery(world)
-  for (let eid of entities) {
-      let pos = Vector(Position.x[eid], Position.y[eid])
-      Position.ox[eid] = pos.x
-      Position.oy[eid] = pos.y
-      Position.x[eid] = pos.x + Controls.dir.x[eid] * Speed.val[eid] * delta;
-      Position.y[eid] = pos.y + Controls.dir.y[eid] * Speed.val[eid] * delta;
-      updateGameObject(world, eid)
-  }
-  return world
-}
+// // Vertical movement
+// if (upKey && this.y === window.innerHeight - this.unitWidth) {
+//     // Check if on ground
+//     this.yVelocity *= -Math.sqrt(this.jumpHeight * -2 * -this.gravity); 
+// }
+// // Apply gravity
+// this.yVelocity += this.gravity * (delta / 1000);
+//
 
+// --- SYSTEMS ---
 export const inputSystem = (world: W) => {
   const entities = inputListenerQuery(world)
   for (let eid of entities) {
@@ -96,9 +90,55 @@ export const inputSystem = (world: W) => {
     dir.normalize()
     Controls.dir.x[eid] = dir.x
     Controls.dir.y[eid] = dir.y
+
+    Controls.action1[eid] = Number(keyPress("ACTION1"));
+    Controls.action2[eid] = Number(keyPress("ACTION1"));
+    Controls.action3[eid] = Number(keyPress("ACTION1"));
+    Controls.action4[eid] = Number(keyPress("ACTION1"));
+
   }
   return world
 }
+
+// Movement system
+export const movementSystem = (world: W) => {
+  const {delta} = world
+  const entities = movementQuery(world)
+  for (let eid of entities) {
+      let pos = Vector(Position.x[eid], Position.y[eid])
+      let vel = Vector(Velocity.x[eid], Velocity.y[eid])
+      let gravity = hasComponent(world, Gravity, eid) ? Gravity.val[eid] : 0;
+      let grounded = hasComponent(world, Grounded, eid) && Grounded.val[eid] === 1;
+      Position.ox[eid] = pos.x
+      Position.oy[eid] = pos.y
+
+      vel.x = Controls.dir.x[eid] * Speed.val[eid];
+
+      if(gravity) {
+        let g = gravity
+        Position.y[eid] = pos.y + gravity * delta
+        if(grounded && Controls.action1[eid]) {
+            const jumpHeight = JumpHeight.val[eid]
+            vel.y = -Math.sqrt(jumpHeight * -2 * -g); 
+        }
+        if(vel.y > 0)  g *= 1.5
+        vel.y = vel.y + gravity * delta
+
+      } else {
+        vel.y = Controls.dir.y[eid] * Speed.val[eid]
+      }
+      Velocity.x[eid] = vel.x
+      Velocity.y[eid] = vel.y
+
+      Position.x[eid] = pos.x + vel.x * delta;
+      Position.y[eid] = pos.y + vel.y * delta;
+
+
+      updateGameObject(world, eid)
+  }
+  return world
+}
+
 
 // Naive collision system
 export const collisionSystem = (world: W) => {
@@ -109,26 +149,46 @@ export const collisionSystem = (world: W) => {
 
     const eidA = entities[i]
     const a = getColliderBounds(eidA)
+    const hasGrounded = hasComponent(world, Grounded, eidA)
+    let grounded = false
 
     for(let eidB of entities.slice(i + 1)) {
 
       const b = getColliderBounds(eidB);
-      const collisionSide = rectCollide(a, b)
-      if(!collisionSide) continue;
+      let collisionSide = rectCollide(a, b)
 
-      console.log(collisionSide)
+      if(!collisionSide) {
+        delete world.collisions[eidA + "-" + eidB];
+        continue;
+      };
 
-      if(collisionSide === "bottom") {
-        Position.y[eidA] -= Math.abs(b.t - a.b) + 0.1
-      } else if (collisionSide === "top") {
-        Position.y[eidA] += Math.abs(a.t - b.b) + 0.1
-      } else if (collisionSide === "right") {
-        Position.x[eidA] -= Math.abs(a.r - b.l) + 0.1
-      } else if (collisionSide === "left") {
-        Position.x[eidA] += Math.abs(a.l - b.r) + 0.1
+      if(collisionSide !== true) {
+        world.collisions[eidA + "-" + eidB] = collisionSide
+      } else {
+        collisionSide = world.collisions[eidA + "-" + eidB] 
+      }
+
+      const isStatic = hasComponent(world, Static, eidB)
+      if(isStatic) {
+        if(collisionSide === "bottom") {
+          Position.y[eidA] -= Math.abs(b.t - a.b) + 0.1
+          grounded = true
+        } else if (collisionSide === "top") {
+          Position.y[eidA] += Math.abs(a.t - b.b) + 0.1
+          Velocity.y[eidA] = 0
+        } else if (collisionSide === "right") {
+          Position.x[eidA] -= Math.abs(a.r - b.l) + 0.1
+        } else if (collisionSide === "left") {
+          Position.x[eidA] += Math.abs(a.l - b.r) + 0.1
+        }
       }
       updateGameObject(world, eidA);
       updateGameObject(world, eidB);
+    }
+
+    if(hasGrounded) {
+      Grounded.val[eidA] = Number(grounded);
+      if(grounded) Velocity.y[eidA] = 2
     }
   }
 

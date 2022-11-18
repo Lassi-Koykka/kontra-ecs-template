@@ -9,7 +9,12 @@ const ControlData = { dir: Vector2, action1: Types.ui8, action2: Types.ui8, acti
 
 export const GameObjectComp = defineComponent()
 export const InputListener = defineComponent()
+export const Static = defineComponent()
 export const Speed = defineComponent({ val: Types.f32 });
+export const JumpHeight = defineComponent({ val: Types.f32 });
+export const Velocity = defineComponent(Vector2);
+export const Gravity = defineComponent({ val: Types.f32 })
+export const Grounded = defineComponent({val: Types.ui8 })
 export const Position = defineComponent(PositionData);
 export const Size = defineComponent(SizeData)
 export const BoxCollider = defineComponent(BoxColliderData)

@@ -1,7 +1,7 @@
 import './style.css'
 import { W } from './types';
 import {pipe, createWorld, defineQuery} from "bitecs"
-import {GameLoop, init} from "kontra";
+import {GameLoop, init, Vector} from "kontra";
 import { setCanvasScale } from './utils';
 import { movementSystem, inputSystem, collisionSystem, colliderQuery, getColliderBounds } from './systems';
 import { GameObjectComp, Position, Size } from './components';
@@ -50,8 +50,6 @@ window.onkeyup = (e) =>  updateKeyMap(e);
 window.onblur = () => resetKeymap();
 window.onfocus = () => resetKeymap();
 
-
-
 const gameObjectQuery = defineQuery([GameObjectComp, Position, Size])
 
 const renderGameObjects = (world: W) => {
@@ -90,10 +88,13 @@ const world: W  = createWorld();
 // const quadTree = Quadtree();
 world.delta = 0;
 world.gameObjects = {}
+world.collisions = {}
 
 Player(world, canvas.width / 2, canvas.height / 2)
 Obstacle(world, canvas.width / 4, canvas.height / 2 )
 Obstacle(world, canvas.width * 0.75, canvas.height / 2 )
+Obstacle(world, canvas.width * 0.5, canvas.height * 0.75 )
+Obstacle(world, canvas.width / 2, canvas.height -10, canvas.width, 10 )
 
 // --- LOOP ---
 let loop = GameLoop({

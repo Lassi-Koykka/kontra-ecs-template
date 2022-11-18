@@ -16,9 +16,12 @@ declare global {
   var restart: () => void;
 }
 
+export type CollisionSide = boolean |  "left" | "right" | "top" | "bottom"
+
 interface W extends IWorld {
   delta: number,
-  gameObjects: {[eid: number]: GameObject}
+  gameObjects: {[eid: number]: GameObject},
+  collisions: {[eids: string]:  CollisionType}
 }
 
 export interface GameState {
