@@ -1,7 +1,7 @@
 import './style.css'
 import { W } from './types';
 import {pipe, createWorld, defineQuery} from "bitecs"
-import {GameLoop, init, Vector} from "kontra";
+import {GameLoop, init, TileEngine, Vector} from "kontra";
 import { setCanvasScale } from './utils';
 import { movementSystem, inputSystem, collisionSystem, colliderQuery, getColliderBounds } from './systems';
 import { GameObjectComp, Position, Size } from './components';
@@ -52,6 +52,16 @@ window.onfocus = () => resetKeymap();
 
 const gameObjectQuery = defineQuery([GameObjectComp, Position, Size])
 
+const updateGameObjects = (world: W) => {
+    const entities = gameObjectQuery(world)
+    for (const eid of entities) {
+      const go = world.gameObjects[eid]
+      if(!go) continue
+      go.update()
+    }
+    return world
+} 
+
 const renderGameObjects = (world: W) => {
     const entities = gameObjectQuery(world)
     for (const eid of entities) {
@@ -78,11 +88,12 @@ const renderColliders = (world: W) => {
 const pipeline = pipe(
   inputSystem, 
   movementSystem, 
-  collisionSystem
+  collisionSystem,
+  updateGameObjects
 );
 const renderPipeline = pipe(
   renderGameObjects, 
-  renderColliders
+  // renderColliders
 )
 const world: W  = createWorld();
 // const quadTree = Quadtree();
@@ -91,9 +102,12 @@ world.gameObjects = {}
 world.collisions = {}
 
 Player(world, canvas.width / 2, canvas.height / 2)
+
+
 Obstacle(world, canvas.width / 4, canvas.height / 2 )
 Obstacle(world, canvas.width * 0.75, canvas.height / 2 )
 Obstacle(world, canvas.width * 0.5, canvas.height * 0.75 )
+Obstacle(world, canvas.width * 0.5, canvas.height * 0.25 )
 Obstacle(world, canvas.width / 2, canvas.height -10, canvas.width, 10 )
 
 // --- LOOP ---

@@ -20,6 +20,7 @@ export type CollisionSide = boolean |  "left" | "right" | "top" | "bottom"
 
 interface W extends IWorld {
   delta: number,
+  tileEngine: TileEngine,
   gameObjects: {[eid: number]: GameObject},
   collisions: {[eids: string]:  CollisionType}
 }

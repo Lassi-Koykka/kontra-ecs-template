@@ -62,16 +62,21 @@ const updateGameObject = (world: W, eid: number) => {
         go.y = Position.y[eid]
         go.width = Size.w[eid]
         go.height = Size.h[eid]
+
+        if(hasComponent(world, Velocity, eid)) {
+          const xVel = Velocity.x[eid]
+          if(xVel > 0) go.scaleX = 1
+          else if(xVel < 0) go.scaleX = -1
+          if(hasComponent(world, Grounded, eid) && Grounded.val[eid] === 0) {
+            go.playAnimation("air")
+          }else if(Math.abs(xVel) < 0.1) {
+            go.playAnimation("idle")
+          } else {
+            go.playAnimation("walk")
+          }
+        }
 }
 
-// // Vertical movement
-// if (upKey && this.y === window.innerHeight - this.unitWidth) {
-//     // Check if on ground
-//     this.yVelocity *= -Math.sqrt(this.jumpHeight * -2 * -this.gravity); 
-// }
-// // Apply gravity
-// this.yVelocity += this.gravity * (delta / 1000);
-//
 
 // --- SYSTEMS ---
 export const inputSystem = (world: W) => {
