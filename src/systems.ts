@@ -1,12 +1,12 @@
 import { defineQuery, hasComponent } from "bitecs"
 import { Vector } from "kontra"
-import { BoxCollider, Controls, Gravity, Grounded, InputListener, JumpHeight, Position, Size, Speed, Static, Velocity } from "./components"
+import { Animations, BoxCollider, Controls, InputListener, Transform, Speed, Static, Velocity, Physics2D } from "./components"
 import { keyDown, keyPress } from "./input"
 import { CollisionSide, W } from "./types"
 
-export const movementQuery = defineQuery([Position, Speed, Velocity, Controls])
+export const movementQuery = defineQuery([Transform, Speed, Velocity, Controls])
 export const inputListenerQuery = defineQuery([InputListener, Controls])
-export const colliderQuery = defineQuery([BoxCollider, Position])
+export const colliderQuery = defineQuery([BoxCollider, Transform])
 
 type Bounds = {
   l: number,
@@ -33,8 +33,8 @@ const rectCollide = (a: Bounds, b:Bounds): CollisionSide  => {
 }
 
 export const getColliderBounds = (eid: number): Bounds => {
-    let pos = Vector(Position.x[eid], Position.y[eid])
-    let oldPos = Vector(Position.ox[eid], Position.oy[eid])
+    let pos = Vector(Transform.x[eid], Transform.y[eid])
+    let oldPos = Vector(Transform.ox[eid], Transform.oy[eid])
     let offset = Vector(BoxCollider.offset.x[eid], BoxCollider.offset.y[eid])
     let anchor = Vector(BoxCollider.anchor.x[eid], BoxCollider.anchor.y[eid])
 
@@ -58,16 +58,23 @@ const updateGameObject = (world: W, eid: number) => {
         const go = world.gameObjects[eid]
         if (!go) return;
 
-        go.x = Position.x[eid]
-        go.y = Position.y[eid]
-        go.width = Size.w[eid]
-        go.height = Size.h[eid]
+        go.x = Transform.x[eid]
+        go.y = Transform.y[eid]
+        go.width = Transform.w[eid]
+        go.height = Transform.h[eid]
 
-        if(hasComponent(world, Velocity, eid)) {
+        const hasVel = hasComponent(world, Velocity, eid)
+        const hasAnimations = hasComponent(world, Animations, eid)
+        const hasPhysics = hasComponent(world, Physics2D, eid)
+
+        if(hasVel) {
           const xVel = Velocity.x[eid]
           if(xVel > 0) go.scaleX = 1
           else if(xVel < 0) go.scaleX = -1
-          if(hasComponent(world, Grounded, eid) && Grounded.val[eid] === 0) {
+
+          if(!hasAnimations) return
+          //Update animations
+          if(hasPhysics && Physics2D.grounded[eid] === 0) {
             go.playAnimation("air")
           }else if(Math.abs(xVel) < 0.1) {
             go.playAnimation("idle")
@@ -110,20 +117,21 @@ export const movementSystem = (world: W) => {
   const {delta} = world
   const entities = movementQuery(world)
   for (let eid of entities) {
-      let pos = Vector(Position.x[eid], Position.y[eid])
+      let pos = Vector(Transform.x[eid], Transform.y[eid])
       let vel = Vector(Velocity.x[eid], Velocity.y[eid])
-      let gravity = hasComponent(world, Gravity, eid) ? Gravity.val[eid] : 0;
-      let grounded = hasComponent(world, Grounded, eid) && Grounded.val[eid] === 1;
-      Position.ox[eid] = pos.x
-      Position.oy[eid] = pos.y
+      const hasPhysics = hasComponent(world, Physics2D, eid)
+      const gravity = hasPhysics ? Physics2D.gravity[eid] : 0;
+      const grounded = hasPhysics && Physics2D.grounded[eid] === 1;
+      Transform.ox[eid] = pos.x
+      Transform.oy[eid] = pos.y
 
       vel.x = Controls.dir.x[eid] * Speed.val[eid];
 
       if(gravity) {
         let g = gravity
-        Position.y[eid] = pos.y + gravity * delta
+        Transform.y[eid] = pos.y + gravity * delta
         if(grounded && Controls.action1[eid]) {
-            const jumpHeight = JumpHeight.val[eid]
+            const jumpHeight = Physics2D.jumpHeight[eid]
             vel.y = -Math.sqrt(jumpHeight * -2 * -g); 
         }
         if(vel.y > 0)  g *= 1.5
@@ -135,8 +143,8 @@ export const movementSystem = (world: W) => {
       Velocity.x[eid] = vel.x
       Velocity.y[eid] = vel.y
 
-      Position.x[eid] = pos.x + vel.x * delta;
-      Position.y[eid] = pos.y + vel.y * delta;
+      Transform.x[eid] = pos.x + vel.x * delta;
+      Transform.y[eid] = pos.y + vel.y * delta;
 
 
       updateGameObject(world, eid)
@@ -154,7 +162,7 @@ export const collisionSystem = (world: W) => {
 
     const eidA = entities[i]
     const a = getColliderBounds(eidA)
-    const hasGrounded = hasComponent(world, Grounded, eidA)
+    const hasPhysics = hasComponent(world, Physics2D, eidA)
     let grounded = false
 
     for(let eidB of entities.slice(i + 1)) {
@@ -176,23 +184,23 @@ export const collisionSystem = (world: W) => {
       const isStatic = hasComponent(world, Static, eidB)
       if(isStatic) {
         if(collisionSide === "bottom") {
-          Position.y[eidA] -= Math.abs(b.t - a.b) + 0.1
+          Transform.y[eidA] -= Math.abs(b.t - a.b) + 0.1
           grounded = true
         } else if (collisionSide === "top") {
-          Position.y[eidA] += Math.abs(a.t - b.b) + 0.1
+          Transform.y[eidA] += Math.abs(a.t - b.b) + 0.1
           Velocity.y[eidA] = 0
         } else if (collisionSide === "right") {
-          Position.x[eidA] -= Math.abs(a.r - b.l) + 0.1
+          Transform.x[eidA] -= Math.abs(a.r - b.l) + 0.1
         } else if (collisionSide === "left") {
-          Position.x[eidA] += Math.abs(a.l - b.r) + 0.1
+          Transform.x[eidA] += Math.abs(a.l - b.r) + 0.1
         }
       }
+
       updateGameObject(world, eidA);
-      updateGameObject(world, eidB);
     }
 
-    if(hasGrounded) {
-      Grounded.val[eidA] = Number(grounded);
+    if(hasPhysics) {
+      Physics2D.grounded[eidA] = Number(grounded);
       if(grounded) Velocity.y[eidA] = 2
     }
   }

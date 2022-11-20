@@ -4,7 +4,7 @@ import {pipe, createWorld, defineQuery} from "bitecs"
 import {GameLoop, init, TileEngine, Vector} from "kontra";
 import { setCanvasScale } from './utils';
 import { movementSystem, inputSystem, collisionSystem, colliderQuery, getColliderBounds } from './systems';
-import { GameObjectComp, Position, Size } from './components';
+import { GameObjectComp, Transform } from './components';
 import { Obstacle, Player } from './entities';
 
 const {canvas, context} = init("gameCanvas")
@@ -50,7 +50,7 @@ window.onkeyup = (e) =>  updateKeyMap(e);
 window.onblur = () => resetKeymap();
 window.onfocus = () => resetKeymap();
 
-const gameObjectQuery = defineQuery([GameObjectComp, Position, Size])
+const gameObjectQuery = defineQuery([GameObjectComp, Transform])
 
 const updateGameObjects = (world: W) => {
     const entities = gameObjectQuery(world)
