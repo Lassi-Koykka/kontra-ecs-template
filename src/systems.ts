@@ -1,12 +1,13 @@
 import { defineQuery, hasComponent } from "bitecs"
 import { Vector } from "kontra"
-import { Animations, BoxCollider, Controls, InputListener, Transform, Speed, Static, Velocity, Physics2D } from "./components"
+import { Animations, BoxCollider, Controls, InputListener, Transform, Speed, Static, Velocity, Physics2D, GameObjectComp } from "./components"
 import { keyDown, keyPress } from "./input"
 import { CollisionSide, W } from "./types"
 
 export const movementQuery = defineQuery([Transform, Speed, Velocity, Controls])
 export const inputListenerQuery = defineQuery([InputListener, Controls])
 export const colliderQuery = defineQuery([BoxCollider, Transform])
+export const gameObjectQuery = defineQuery([GameObjectComp, Transform])
 
 type Bounds = {
   l: number,
@@ -196,7 +197,6 @@ export const collisionSystem = (world: W) => {
         }
       }
 
-      updateGameObject(world, eidA);
     }
 
     if(hasPhysics) {
@@ -207,3 +207,15 @@ export const collisionSystem = (world: W) => {
 
   return world
 }
+
+
+export const updateGameObjects = (world: W) => {
+    const entities = gameObjectQuery(world)
+    for (const eid of entities) {
+      const go = world.gameObjects[eid]
+      if(!go) continue
+      go.update()
+      updateGameObject(world, eid);
+    }
+    return world
+} 

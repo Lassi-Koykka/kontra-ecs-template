@@ -1,5 +1,5 @@
 import { addComponent, addEntity, Component } from "bitecs";
-import { GameObject, Sprite, SpriteSheet, Vector } from "kontra";
+import { GameObject, imageAssets, Sprite, SpriteSheet, Vector } from "kontra";
 import {
     Animations,
   BoxCollider,
@@ -40,21 +40,11 @@ const Actor = (world: W, go: GameObject): number => {
   return eid;
 };
 
-const loadImage = (uri: string) => {
-  const img = new Image()
-  img.src = uri
-  return img
-}
-
 // --- ENTITIES ---
 export const Player = (world: W, x: number, y: number) => {
 
-  const idleImage = loadImage('images/Player_Idle.png');
-  const walkImage = loadImage('images/Player_Walk.png');
-  const airImage = loadImage('images/Player_Air.png');
-
   const idleSpriteSheet = SpriteSheet({
-    image: idleImage,
+    image: imageAssets['images/Player_Idle'],
     frameWidth: 15,
     frameHeight: 20,
     animations: {
@@ -66,7 +56,7 @@ export const Player = (world: W, x: number, y: number) => {
   })
 
   const walkSpriteSheet = SpriteSheet({
-    image: walkImage,
+    image: imageAssets['images/Player_Walk'],
     frameWidth: 15,
     frameHeight: 20,
     animations: {
@@ -78,7 +68,7 @@ export const Player = (world: W, x: number, y: number) => {
   })
 
   const airSpriteSheet = SpriteSheet({
-    image: airImage,
+    image: imageAssets['images/Player_Air'],
     frameWidth: 15,
     frameHeight: 20,
     animations: {
@@ -139,13 +129,19 @@ export const Obstacle = (
   h: number = 32 * 3,
   anchor: Vector = Vector(0.5, 0.5)
 ): number => {
+
   const obstacleSprite = Sprite({
+    image: imageAssets['images/Tileset'],
     x,
     y,
     width: w,
     height: h,
     anchor,
-    color: "white",
+    render: function () {
+      if(!this.image || !this.width || !this.height) return;
+      this.context?.drawImage(this.image, 1, 1, 14, 14, 0, 0, this.width, this.height )
+    }
+    // color: "white",
   });
 
   const eid = Actor(world, obstacleSprite);
