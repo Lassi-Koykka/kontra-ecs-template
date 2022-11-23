@@ -1,5 +1,4 @@
 import { BufferLoader } from "./audio/bufferloader";
-import { Align } from "./enums";
 
 // Assets
 export const loadImage = (src: string): Promise<HTMLImageElement> =>
@@ -72,39 +71,6 @@ export const toRadians = (deg: number) => {
   return (deg * Math.PI) / 180;
 };
 
-export const getOrigin = (
-  { x, y }: { x: number; y: number },
-  {
-    width,
-    height,
-    horizontalAlign,
-    verticalAlign,
-  }: {
-    width: number;
-    height: number;
-    horizontalAlign: Align;
-    verticalAlign: Align;
-  }
-) => {
-  return {
-    x: removeOffset(x, width, horizontalAlign),
-    y: removeOffset(y, height, verticalAlign),
-  };
-};
-
-const removeOffset = (coord: number, size: number, align: Align) => {
-  switch (align) {
-    case Align.START:
-      return coord;
-    case Align.CENTER:
-      return Math.floor(coord - size / 2);
-    case Align.END:
-      return coord - size;
-    default:
-      return coord;
-  }
-};
-
 export const clamp = (num: number, min: number, max: number) =>
   Math.min(Math.max(num, min), max);
 
@@ -144,8 +110,6 @@ export const getDirKey = (dir: { x: number; y: number }) => {
   return "default";
 };
 
-export const vecToDir = ({x,y}: {x: number, y: number}) => ({dirX: x, dirY: y})
-
 export const setCanvasScale = () => {
   const aspectRatio = canvas.width / canvas.height;
 
@@ -157,3 +121,13 @@ export const setCanvasScale = () => {
     canvas.style.height = "95vh";
   }
 };
+
+export const scaleImage = (img: HTMLImageElement, scale: number, startOffset?: {x?: number, y?: number}) => {
+  const c = document.createElement("canvas");
+  c.width = img.width * scale
+  c.height = img.height * scale
+  const context = c.getContext("2d");
+  context!.imageSmoothingEnabled = false;
+  context?.drawImage(img, startOffset?.x || 0, startOffset?.y || 0, img.width, img.height, 0, 0, img.width * scale, img.height * scale);
+  return c;
+}

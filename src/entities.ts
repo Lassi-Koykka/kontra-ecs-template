@@ -1,44 +1,18 @@
-import { addComponent, addEntity, Component } from "bitecs";
-import { GameObject, imageAssets, Sprite, SpriteSheet, Vector } from "kontra";
+import { imageAssets, SpriteSheet, Vector } from "kontra";
+import { Actor } from "./actor";
 import {
-    Animations,
-  BoxCollider,
-  Controls,
-  GameObjectComp,
-  InputListener,
-  Physics2D,
-  Speed,
-  Static,
-  Transform,
-  Velocity,
+    Player as PlayerComponent,
+    BoxCollider,
+    Controls,
+    InputListener,
+    Physics2D,
+    Speed,
+    Static,
+    Transform,
+    Velocity,
 } from "./components";
 import { W } from "./types";
-
-const addGameObject = (world: W, eid: number, go: GameObject) => {
-  addComponent(world, GameObjectComp, eid);
-  world.gameObjects[eid] = go;
-};
-
-const Actor = (world: W, go: GameObject): number => {
-  const eid = addEntity(world);
-  const components: Component[] = [
-    Transform,
-    ...(go.animations ? [Animations] : [])
-  ];
-
-  for (let c of components) addComponent(world, c, eid);
-
-  Transform.w[eid] = go.width;
-  Transform.h[eid] = go.height;
-  Transform.x[eid] = go.x;
-  Transform.y[eid] = go.y;
-  Transform.ox[eid] = go.x;
-  Transform.oy[eid] = go.y;
-
-  addGameObject(world, eid, go);
-
-  return eid;
-};
+import { scaleImage } from "./utils";
 
 // --- ENTITIES ---
 export const Player = (world: W, x: number, y: number) => {
@@ -79,7 +53,8 @@ export const Player = (world: W, x: number, y: number) => {
     }
   })
 
-  const playerSprite = Sprite({
+  const player = Actor({
+    w: world,
     x,
     y,
     width: 16 * 5,
@@ -90,22 +65,21 @@ export const Player = (world: W, x: number, y: number) => {
       ...walkSpriteSheet.animations,
       ...airSpriteSheet.animations
     },
+    comps: [
+      PlayerComponent,
+      Speed, 
+      Velocity,
+      InputListener, 
+      Controls, 
+      BoxCollider,
+
+      Physics2D,
+    ]
     // color: "red",
   });
 
-  const eid = Actor(world, playerSprite);
-
-  const components: Component[] = [
-    Speed, 
-    Velocity,
-    InputListener, 
-    Controls, 
-    BoxCollider,
-
-    Physics2D,
-  ];
-
-  for (let c of components) addComponent(world, c, eid);
+  console.log(player)
+  const eid = player.eid;
 
   Speed.val[eid] = 400;
   BoxCollider.w[eid] = Transform.w[eid];
@@ -118,7 +92,7 @@ export const Player = (world: W, x: number, y: number) => {
   Physics2D.grounded[eid] = 0;
   Physics2D.gravity[eid] = 1500;
 
-  return eid;
+  return player;
 };
 
 export const Obstacle = (
@@ -128,31 +102,31 @@ export const Obstacle = (
   w: number = 32 * 3,
   h: number = 32 * 3,
   anchor: Vector = Vector(0.5, 0.5)
-): number => {
+) => {
+  const img = scaleImage(imageAssets['images/Tileset'], 1, {x: 1, y: 1})
 
-  const obstacleSprite = Sprite({
-    image: imageAssets['images/Tileset'],
+  const obstacle = Actor({
+    w: world,
+    image: img,
     x,
     y,
     width: w,
     height: h,
     anchor,
+    comps: [BoxCollider, Static],
     render: function () {
       if(!this.image || !this.width || !this.height) return;
-      this.context?.drawImage(this.image, 1, 1, 14, 14, 0, 0, this.width, this.height )
-    }
-    // color: "white",
+      this.context?.drawImage(this.image, 32, 64, 30, 30, 0, 0, this.width, this.height )
+    },
   });
 
-  const eid = Actor(world, obstacleSprite);
-  const components: Component[] = [BoxCollider, Static];
-
-  for (let c of components) addComponent(world, c, eid);
+  const eid = obstacle.eid;
 
   BoxCollider.w[eid] = Transform.w[eid];
   BoxCollider.h[eid] = Transform.h[eid];
   BoxCollider.anchor.x[eid] = anchor.x
   BoxCollider.anchor.y[eid] = anchor.y;
   BoxCollider.offset.x[eid] = BoxCollider.offset.y[eid] = 0;
-  return eid;
+
+  return obstacle;
 };

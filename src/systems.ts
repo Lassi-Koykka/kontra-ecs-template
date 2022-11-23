@@ -1,6 +1,6 @@
 import { defineQuery, hasComponent } from "bitecs"
 import { Vector } from "kontra"
-import { Animations, BoxCollider, Controls, InputListener, Transform, Speed, Static, Velocity, Physics2D, GameObjectComp } from "./components"
+import { Animations, BoxCollider, Controls, InputListener, Transform, Speed, Static, Velocity, Physics2D, GameObjectComp, Player } from "./components"
 import { keyDown, keyPress } from "./input"
 import { CollisionSide, W } from "./types"
 
@@ -8,6 +8,7 @@ export const movementQuery = defineQuery([Transform, Speed, Velocity, Controls])
 export const inputListenerQuery = defineQuery([InputListener, Controls])
 export const colliderQuery = defineQuery([BoxCollider, Transform])
 export const gameObjectQuery = defineQuery([GameObjectComp, Transform])
+export const playerQuery = defineQuery([Player])
 
 type Bounds = {
   l: number,
@@ -219,3 +220,17 @@ export const updateGameObjects = (world: W) => {
     }
     return world
 } 
+
+export const updateTileMapCamera = (world: W) => {
+      //Update camera
+      const entities = playerQuery(world)
+      for (let eid of entities) {
+        if((Transform.x[eid] < canvas.width / 4 && Velocity.x[eid] < -0.1) || (Transform.x[eid] > canvas.width * 0.75 && Velocity.x[eid] > 0.1)) {
+          world.tileEngine.sx += Transform.x[eid] - Transform.ox[eid]
+        }
+        if((Transform.y[eid] < canvas.height / 4 && Velocity.y[eid] < -0.1) || (Transform.y[eid] > canvas.height * 0.75 && Velocity.y[eid] > 0.1)) {
+          world.tileEngine.sy += Transform.y[eid] - Transform.oy[eid]
+        }
+      }
+
+}

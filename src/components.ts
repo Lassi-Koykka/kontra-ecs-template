@@ -8,6 +8,7 @@ const BoxColliderData = {...SizeData, anchor: Vector2, offset: Vector2}
 const CircleColliderData = {r: Types.f32, offset: Vector2}
 const ControlData = { dir: Vector2, action1: Types.ui8, action2: Types.ui8, action3: Types.ui8, action4: Types.f32, menu: Types.ui8 }
 
+export const Player = defineComponent()
 export const GameObjectComp = defineComponent()
 export const InputListener = defineComponent()
 export const Static = defineComponent()
