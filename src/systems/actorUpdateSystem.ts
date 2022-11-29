@@ -3,7 +3,7 @@ import { Animations, Physics2D, Transform, Velocity } from "../components"
 import { gameObjectQuery } from "../queries"
 import { W } from "../types"
 
-export const updateGameObject = (world: W, eid: number) => {
+export const updateActor = (world: W, eid: number) => {
         const go = world.actors[eid]
         if (!go) return;
 
@@ -18,6 +18,7 @@ export const updateGameObject = (world: W, eid: number) => {
 
         if(hasVel) {
           const xVel = Velocity.x[eid]
+          const yVel = Velocity.y[eid]
           if(xVel > 0) go.scaleX = 1
           else if(xVel < 0) go.scaleX = -1
 
@@ -25,7 +26,7 @@ export const updateGameObject = (world: W, eid: number) => {
           //Update animations
           if(hasPhysics && Physics2D.grounded[eid] === 0) {
             go.playAnimation("air")
-          }else if(Math.abs(xVel) < 0.1) {
+          }else if(hasPhysics && Math.abs(xVel) < 0.1 || (Math.abs(xVel) < 0.1 && Math.abs(yVel) < 0.1)) {
             go.playAnimation("idle")
           } else {
             go.playAnimation("walk")
@@ -39,7 +40,7 @@ const updateActors = (world: W) => {
       const a = world.actors[eid]
       if(!a) continue
       a.update()
-      updateGameObject(world, eid);
+      updateActor(world, eid);
     }
     return world
 } 

@@ -3,7 +3,7 @@ import { clamp, TileEngine, Vector } from "kontra"
 import { Controls, Physics2D, Speed, TileMovement, Transform, Velocity } from "../components"
 import { movementQuery } from "../queries"
 import { W } from "../types"
-import { updateGameObject } from "./actorUpdateSystem"
+import { updateActor } from "./actorUpdateSystem"
 
 // Tile movement
 const tileMovement = ({delta, eid, tileEngine}: {delta: number, eid: number, tileEngine: TileEngine}) => {
@@ -84,7 +84,7 @@ const movementSystem = (world: W) => {
       Transform.y[eid] = pos.y + vel.y * delta;
 
 
-      updateGameObject(world, eid)
+      updateActor(world, eid)
   }
   return world
 }
