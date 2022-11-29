@@ -21,7 +21,7 @@ export type CollisionSide = boolean |  "left" | "right" | "top" | "bottom"
 interface W extends IWorld {
   delta: number,
   tileEngine: TileEngine,
-  gameObjects: {[eid: number]: GameObject},
+  actors: {[eid: number]: ActorClass},
   collisions: {[eids: string]:  CollisionType}
 }
 
@@ -59,6 +59,14 @@ export interface IAudioManager {
   ) => void;
 }
 
-export interface ControlsData {
+export type Bounds = {
+  l: number,
+  r: number, 
+  t: number, 
+  b: number
 
+  ol: number,
+  or: number, 
+  ot: number, 
+  ob: number
 }

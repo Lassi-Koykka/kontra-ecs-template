@@ -1,12 +1,13 @@
 import './style.css'
 import { W } from './types';
 import {pipe, createWorld } from "bitecs"
-import {GameLoop, imageAssets, init, load, TileEngine} from "kontra";
+import {GameLoop, imageAssets, init, load, TileEngine, Vector} from "kontra";
 import { scaleImage, setCanvasScale } from './utils';
-import { movementSystem, inputSystem, collisionSystem, updateGameObjects, gameObjectQuery } from './systems';
-import { Obstacle, Player } from './entities';
+import { movementSystem, inputSystem, collisionSystem, actorUpdateSystem, interactionSystem } from './systems';
+import { Door, Obstacle, Player } from './entities';
 import { renderColliders, renderGameObjects } from './rendering';
 import { Transform, Velocity } from './components';
+import { gameObjectQuery } from './queries';
 
 const {canvas, context} = init("gameCanvas")
 
@@ -55,7 +56,8 @@ const pipeline = pipe(
   inputSystem, 
   movementSystem, 
   collisionSystem,
-  updateGameObjects
+  interactionSystem,
+  actorUpdateSystem,
 );
 
 const renderPipeline = pipe(
@@ -66,7 +68,7 @@ const renderPipeline = pipe(
 const world: W  = createWorld();
 // const quadTree = Quadtree();
 world.delta = 0;
-world.gameObjects = {};
+world.actors = {};
 world.collisions = {};
 
 (async () => {
@@ -77,6 +79,7 @@ world.collisions = {};
     'images/Player_Air.png',
     'images/Tileset.png',
     'images/Background_Tileset.png',
+    'images/Door.png'
   )
 
   const scale = 7
@@ -110,24 +113,22 @@ world.collisions = {};
     }]
   })
 
-  tileEngine.tilewidth = 50,
-  tileEngine.tileheight = 50
-
   world.tileEngine = tileEngine
 
   // --- ADD ENTITIES ---
-  const player = Player(world, canvas.width / 2, canvas.height / 2)
+  Door(world, canvas.width * 0.75, canvas.height - tileSize - 21, tileSize, tileSize * 2 );
+  Obstacle(world, tileSize * 3, tileSize * 3, tileSize, tileSize, Vector(0,0) );
+  Obstacle(world, tileSize * 6, tileSize * 1, tileSize, tileSize, Vector(0,0) );
+  Obstacle(world, tileSize * 6, tileSize * 5, tileSize, tileSize, Vector(0,0) );
+  Obstacle(world, tileSize * 9, tileSize * 3, tileSize, tileSize, Vector(0,0) );
+  Obstacle(world, canvas.width / 2, canvas.height - 20, canvas.width, 30 );
 
-  Obstacle(world, canvas.width / 4, canvas.height / 2 );
-  Obstacle(world, canvas.width * 0.75, canvas.height / 2 );
-  Obstacle(world, canvas.width * 0.5, canvas.height * 0.75 );
-  Obstacle(world, canvas.width * 0.5, canvas.height * 0.25 );
-  Obstacle(world, canvas.width / 2, canvas.height -10, canvas.width, 30 );
+  const player = Player(world, tileSize * 6.5, tileSize * 3.5)
 
   const entities = gameObjectQuery(world)
 
   for (let eid of entities) {
-    const go = world.gameObjects[eid]
+    const go = world.actors[eid]
     if(!go) continue
     world.tileEngine.add(go)
   }

@@ -30,15 +30,18 @@ type IProps = { [props: string]: any;
 
 const addGameObject = (world: W, eid: number, go: GameObject) => {
   addComponent(world, GameObjectComp, eid);
-  world.gameObjects[eid] = go;
+  world.actors[eid] = go;
 };
 
 export class ActorClass extends SpriteClass {
+  static _w: W
   eid: number;
+  currAnimationName: string | null;
 
   constructor(props: IProps) {
     const {w, comps: comps, ...rest} = props
     super(rest)
+    this.currAnimationName = rest.animations ? Object.keys(rest.animations)[0] : null
     this.eid = props?.eid ? props.eid : addEntity(w)
     const eid = this.eid
 
@@ -73,6 +76,16 @@ export class ActorClass extends SpriteClass {
     return removeComponent(w, c, this.eid)
   }
 
+  playAnimation(name: string): void {
+      this.currAnimationName = name;
+      super.playAnimation(name)
+  }
+
+  animationFinished() {
+    //@ts-ignore
+    return this.currentAnimation._f === this.currentAnimation.frames.length - 1;;
+  }
+
   destroy(w: W) {
     removeEntity(w, this.eid)
   }
@@ -84,6 +97,7 @@ export class ActorClass extends SpriteClass {
     this.x = Transform.x[this.eid];
     this.y =Transform.y[this.eid];
   }
+
 }
 
 export function Actor(props: IProps) {

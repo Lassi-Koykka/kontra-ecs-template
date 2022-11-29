@@ -1,10 +1,11 @@
-import { colliderQuery, gameObjectQuery, getColliderBounds } from "./systems"
+import { boxColliderQuery, gameObjectQuery } from "./queries"
+import { getColliderBounds } from "./systems/collisionSystem"
 import { W } from "./types"
 
 export const renderGameObjects = (world: W) => {
     const entities = gameObjectQuery(world)
     for (const eid of entities) {
-      const go = world.gameObjects[eid]
+      const go = world.actors[eid]
       if(!go) continue
       go.render()
     }
@@ -12,7 +13,7 @@ export const renderGameObjects = (world: W) => {
 } 
 
 export const renderColliders = (world: W) => {
-  const entities = colliderQuery(world)
+  const entities = boxColliderQuery(world)
   for (const eid of entities) {
     const {t,b,l,r} = getColliderBounds(eid)
 

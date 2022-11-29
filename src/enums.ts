@@ -20,3 +20,9 @@ export enum ColliderShape {
   RECTANGLE,
   CIRCLE,
 }
+
+export enum ColliderType {
+  KINEMATIC,
+  SOLID,
+  TRIGGER,
+}
