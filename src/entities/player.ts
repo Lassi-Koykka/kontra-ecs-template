@@ -75,7 +75,7 @@ const Player = (world: W, x: number, y: number) => {
       BoxCollider,
 
       // TileMovement,
-      // Physics2D,
+      Physics2D,
     ]
     // color: "red",
   });
