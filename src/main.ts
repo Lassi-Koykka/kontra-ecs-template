@@ -1,7 +1,7 @@
 import './style.css'
 import { W } from './types';
 import {pipe, createWorld } from "bitecs"
-import {GameLoop, imageAssets, init, load, TileEngine, Vector} from "kontra";
+import {GameLoop, getPointer, imageAssets, init, initPointer, load, TileEngine, Vector} from "kontra";
 import { scaleImage, setCanvasScale } from './utils';
 import { movementSystem, inputSystem, collisionSystem, actorUpdateSystem, interactionSystem } from './systems';
 import { Door, Obstacle, Player } from './entities';
@@ -51,6 +51,8 @@ window.onkeydown = (e) => updateKeyMap(e);
 window.onkeyup = (e) =>  updateKeyMap(e);
 window.onblur = () => resetKeymap();
 window.onfocus = () => resetKeymap();
+
+initPointer()
 
 const pipeline = pipe(
   inputSystem, 
@@ -147,13 +149,15 @@ world.collisions = {};
         world.tileEngine.sy += Transform.y[player.eid] - Transform.oy[player.eid]
       }
 
+      // Log Pointer
+      console.log(getPointer());
+
       // Set keymap history
       KEYMAP_PREV = Object.assign(KEYMAP_PREV, KEYMAP);
     },
     render: () => { // render the game state
-      world.tileEngine.render()
-      // renderPipeline(world)
-
+      // world.tileEngine.render()
+      renderPipeline(world)
     }
   });
 
